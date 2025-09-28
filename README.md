@@ -73,5 +73,77 @@ All tests passed.
 - `test_csv_to_sqlite.py` — Automated test for loader
 - `.gitignore` — excludes `*.db`, caches, venvs
 
+---
+
+# Part 2: API Prototype
+
+This repo also includes a minimal FastAPI service that exposes `POST /county_data` backed by the SQLite database created in Part 1.
+
+## Endpoint
+- Path: `POST /county_data`
+- Body (JSON, `content-type: application/json`):
+  - `zip` (required): 5-digit ZIP, e.g. `"02138"`
+  - `measure_name` (required): one of
+    - Violent crime rate
+    - Unemployment
+    - Children in poverty
+    - Diabetic screening
+    - Mammography screening
+    - Preventable hospital stays
+    - Uninsured
+    - Sexually transmitted infections
+    - Physical inactivity
+    - Adult obesity
+    - Premature Death
+    - Daily fine particulate matter
+  - `coffee` (optional): if `"teapot"`, returns HTTP 418
+
+## Run locally
+```bash
+pip3 install -r requirements.txt
+uvicorn app:app --reload --port 8000
+```
+
+## Test with curl
+```bash
+# Success (200)
+curl -s -H 'content-type: application/json' \
+  -d '{"zip":"02138","measure_name":"Adult obesity"}' \
+  http://localhost:8000/county_data | head
+
+# Teapot (418)
+curl -i -H 'content-type: application/json' \
+  -d '{"zip":"02138","measure_name":"Adult obesity","coffee":"teapot"}' \
+  http://localhost:8000/county_data
+
+# Missing inputs (400)
+curl -i -H 'content-type: application/json' -d '{"zip":"02138"}' http://localhost:8000/county_data
+
+# Not found (404)
+curl -i -H 'content-type: application/json' \
+  -d '{"zip":"99999","measure_name":"Adult obesity"}' \
+  http://localhost:8000/county_data
+```
+
+## Response shape (example subset)
+For `{"zip":"02138","measure_name":"Adult obesity"}` the response is an array of objects with keys:
+`state, county, state_code, county_code, year_span, measure_name, measure_id, numerator, denominator, raw_value, confidence_interval_lower_bound, confidence_interval_upper_bound, data_release_year, fipscode`.
+
+## Deployment (Render)
+This repo includes `render.yaml` to deploy on Render:
+- Build: `pip install -r requirements.txt`
+- Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+- Env var: `DB_PATH=data.db`
+
+Steps:
+1. Push repo to GitHub (done).
+2. In Render, create new Web Service from this repo. It will detect `render.yaml`.
+3. Deploy. After live, test the public URL with the curl examples above.
+
+## API files
+- `app.py` — FastAPI app exposing `POST /county_data` with parameterized SQL, required errors (418/400/404)
+- `requirements.txt` — FastAPI, Uvicorn, Pydantic
+- `render.yaml` — Render configuration (web service)
+
 ## Attribution
 This assignment permits the use of generative AI. This repository includes code authored with assistance from a generative AI coding assistant (Cascade) and reviewed/edited by the author. Please include attribution in any additional files that incorporate external sources.
