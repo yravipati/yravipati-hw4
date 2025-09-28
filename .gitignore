@@ -14,3 +14,6 @@ venv/
 
 # Logs
 *.log
+ 
+# Allow committing the built database for deployment
+!data.db
