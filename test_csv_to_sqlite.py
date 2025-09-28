@@ -9,6 +9,9 @@ Basic automated test for csv_to_sqlite.py
 
 Note: Row counts are based on the Feb 2025 datasets referenced in the assignment.
 If you use different dataset versions, counts may differ.
+
+Attribution:
+- This file was created with assistance from a generative AI coding assistant (Cascade), and then reviewed/edited by the author to meet assignment requirements.
 """
 import os
 import sqlite3
