@@ -1,0 +1,14 @@
+{
+  "name": "yravipati-hw4-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Netlify Functions API for /county_data using sql.js and bundled SQLite db",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 'No build step for functions'",
+    "start": "npx netlify-cli dev"
+  },
+  "dependencies": {
+    "sql.js": "^1.10.2"
+  }
+}

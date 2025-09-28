@@ -17,3 +17,6 @@ venv/
  
 # Allow committing the built database for deployment
 !data.db
+
+# Node.js
+node_modules/

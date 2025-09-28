@@ -77,7 +77,9 @@ All tests passed.
 
 # Part 2: API Prototype
 
-This repo also includes a minimal FastAPI service that exposes `POST /county_data` backed by the SQLite database created in Part 1.
+This repo includes two ways to serve the `POST /county_data` endpoint backed by `data.db`:
+- **Netlify Functions (Node + sql.js)** — recommended for easy hosting without a server.
+- **FastAPI (Python)** — alternative local/server hosting option.
 
 ## Endpoint
 - Path: `POST /county_data`
@@ -98,7 +100,7 @@ This repo also includes a minimal FastAPI service that exposes `POST /county_dat
     - Daily fine particulate matter
   - `coffee` (optional): if `"teapot"`, returns HTTP 418
 
-## Run locally
+## Run locally (FastAPI option)
 ```bash
 pip3 install -r requirements.txt
 uvicorn app:app --reload --port 8000
@@ -129,16 +131,37 @@ curl -i -H 'content-type: application/json' \
 For `{"zip":"02138","measure_name":"Adult obesity"}` the response is an array of objects with keys:
 `state, county, state_code, county_code, year_span, measure_name, measure_id, numerator, denominator, raw_value, confidence_interval_lower_bound, confidence_interval_upper_bound, data_release_year, fipscode`.
 
-## Deployment (Render)
-This repo includes `render.yaml` to deploy on Render:
+## Deployment (Netlify — recommended)
+This repo contains a Netlify serverless function at `netlify/functions/county_data.js` and `netlify.toml` that:
+- Redirects `POST /county_data` → `/.netlify/functions/county_data`.
+- Bundles `data.db` and `sql.js` WASM.
+
+Steps:
+1. Ensure `data.db` exists in the repo root (already included).
+2. Push to GitHub (done). In Netlify, create a new site from this repo.
+3. Build command: `npm ci --omit=dev || npm i` (in `netlify.toml`). No separate build step needed.
+4. After deploy, test:
+   ```bash
+   curl -s -H 'content-type: application/json' \
+     -d '{"zip":"02138","measure_name":"Adult obesity"}' \
+     https://<your-netlify-site>.netlify.app/county_data | head
+   ```
+
+Local dev (optional):
+```bash
+npm i
+npx netlify-cli dev
+# test locally
+curl -s -H 'content-type: application/json' \
+  -d '{"zip":"02138","measure_name":"Adult obesity"}' \
+  http://localhost:8888/county_data | head
+```
+
+## Deployment (Render — alternative)
+This repo also includes `render.yaml` to deploy the FastAPI app on Render:
 - Build: `pip install -r requirements.txt`
 - Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
 - Env var: `DB_PATH=data.db`
-
-Steps:
-1. Push repo to GitHub (done).
-2. In Render, create new Web Service from this repo. It will detect `render.yaml`.
-3. Deploy. After live, test the public URL with the curl examples above.
 
 ## API files
 - `app.py` — FastAPI app exposing `POST /county_data` with parameterized SQL, required errors (418/400/404)
