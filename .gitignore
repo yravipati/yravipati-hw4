@@ -1,0 +1,16 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# SQLite databases
+*.db
+
+# Virtual environments
+.venv/
+venv/
+
+# Logs
+*.log
