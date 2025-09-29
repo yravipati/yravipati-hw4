@@ -3,5 +3,11 @@
     "api/county_data.js": {
       "includeFiles": "data.db"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/county_data",
+      "destination": "/api/county_data"
+    }
+  ]
 }
