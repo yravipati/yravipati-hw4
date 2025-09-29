@@ -1,8 +1,10 @@
-# Python requirements for Part 1 (CSV to SQLite)
-# No external dependencies needed - uses only Python standard library
-# (sqlite3, csv, os, re, sys are built-in)
+# Python requirements for CS1060 HW4
+# Part 1 (CSV to SQLite) uses only Python standard library:
+# - sqlite3 (built-in)
+# - csv (built-in) 
+# - os, re, sys (built-in)
 
-# For optional testing with FastAPI (not used in final deployment):
-# fastapi>=0.112.0
-# uvicorn[standard]>=0.23.0
-# pydantic>=2.0.0
+# Part 2 (API) is deployed as Node.js serverless function on Vercel
+# See package.json for Node.js dependencies
+
+# No external Python packages required

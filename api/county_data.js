@@ -1,8 +1,19 @@
-// Vercel Serverless Function: /api/county_data
-// POST JSON { zip: "02138", measure_name: "Adult obesity" }
-// Returns rows from county_health_rankings for the county/state resolved from zip_county.
-// Special rule: if coffee == "teapot" → 418. Errors: 400 (bad request), 404 (not found).
-// Uses sql.js (WASM) to query the bundled SQLite database (data.db) read-only.
+/**
+ * CS1060 HW4 - Vercel Serverless Function: /api/county_data
+ * 
+ * POST JSON endpoint that queries county health data by ZIP code.
+ * Input: { zip: "02138", measure_name: "Adult obesity" }
+ * Output: Array of health records from county_health_rankings table
+ * 
+ * HTTP Status Codes:
+ * - 200: Success (returns data array)
+ * - 400: Bad request (invalid/missing zip or measure_name)
+ * - 404: Not found (ZIP not in dataset or no health data)
+ * - 418: I'm a teapot (when coffee=teapot is provided)
+ * 
+ * Uses better-sqlite3 to query bundled SQLite database (data.db) read-only.
+ * Deployment: Vercel with automatic GitHub integration
+ */
 
 const fs = require('fs');
 const path = require('path');
