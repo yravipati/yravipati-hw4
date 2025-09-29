@@ -1,7 +1,10 @@
 {
   "functions": {
     "api/county_data.js": {
-      "includeFiles": "data.db"
+      "includeFiles": [
+        "data.db",
+        "node_modules/sql.js/dist/sql-wasm.wasm"
+      ]
     }
   },
   "rewrites": [
