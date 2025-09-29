@@ -58,8 +58,7 @@ async function getDb() {
 }
 
 function send(res, status, payload) {
-  res.status(status).setHeader('content-type', 'application/json');
-  res.send(JSON.stringify(payload));
+  return res.status(status).json(payload);
 }
 
 module.exports = async function handler(req, res) {
@@ -74,8 +73,7 @@ module.exports = async function handler(req, res) {
   const { zip = '', measure_name = '', coffee } = req.body || {};
 
   if (coffee === 'teapot') {
-    res.status(418).setHeader('content-type', 'application/json');
-    return res.send(JSON.stringify({ error: null, result: "I'm a teapot" }));
+    return res.status(418).json({ error: null, result: "I'm a teapot" });
   }
 
   const zipStr = String(zip).trim();
