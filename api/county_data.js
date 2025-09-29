@@ -29,26 +29,9 @@ async function getDb() {
     dbPromise = (async () => {
       const initSqlJs = require('sql.js');
       
-      // Initialize sql.js with proper WASM loading for Vercel
+      // Initialize sql.js with CDN WASM for Vercel compatibility
       const SQL = await initSqlJs({
-        locateFile: (file) => {
-          // Try to find the WASM file in various locations
-          const candidates = [
-            path.join(__dirname, file),
-            path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist', file),
-            path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file),
-            `https://sql.js.org/dist/${file}` // Fallback to CDN
-          ];
-          
-          for (const candidate of candidates) {
-            if (!candidate.startsWith('http') && fs.existsSync(candidate)) {
-              return candidate;
-            }
-          }
-          
-          // Return CDN as final fallback
-          return `https://sql.js.org/dist/${file}`;
-        }
+        locateFile: (file) => `https://sql.js.org/dist/${file}`
       });
       
       // Try multiple paths for data.db in Vercel environment
