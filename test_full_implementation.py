@@ -302,6 +302,44 @@ def test_part2_api_endpoint(results: TestResults):
         results.pass_test("All allowed measure names accepted")
     else:
         results.fail_test("All allowed measure names", f"Only {valid_measures}/{len(allowed_measures)} worked")
+    
+    # Test 7: Wrong content-type (400)
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            API_ENDPOINT,
+            data=json.dumps({"zip": "02138", "measure_name": "Adult obesity"}).encode('utf-8'),
+            headers={'Content-Type': 'text/plain'}
+        )
+        try:
+            urllib.request.urlopen(req)
+            results.fail_test("Wrong content-type returns 400", "Expected 400, got success")
+        except urllib.error.HTTPError as e:
+            if e.code == 400:
+                results.pass_test("Wrong content-type returns 400")
+            else:
+                results.fail_test("Wrong content-type returns 400", f"Got status {e.code}")
+    except Exception as e:
+        results.fail_test("Wrong content-type test", f"Error: {str(e)}")
+    
+    # Test 8: Invalid ZIP formats (400)
+    invalid_zips = ["1234", "123456", "abcde", "12a34"]
+    invalid_zip_tests = 0
+    for invalid_zip in invalid_zips:
+        try:
+            status, data = make_api_request(API_ENDPOINT, {
+                "zip": invalid_zip,
+                "measure_name": "Adult obesity"
+            })
+            if status == 400:
+                invalid_zip_tests += 1
+        except:
+            pass
+    
+    if invalid_zip_tests == len(invalid_zips):
+        results.pass_test("Invalid ZIP formats return 400")
+    else:
+        results.fail_test("Invalid ZIP formats", f"Only {invalid_zip_tests}/{len(invalid_zips)} returned 400")
 
 def main():
     print("🧪 CS1060 HW4 - Comprehensive Implementation Test")
