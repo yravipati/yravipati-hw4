@@ -75,14 +75,12 @@ All tests passed.
 
 ---
 
-# Part 2: API Prototype
+# Part 2: API Prototype (Vercel)
 
-This repo includes two ways to serve the `POST /county_data` endpoint backed by `data.db`:
-- **Netlify Functions (Node + sql.js)** — recommended for easy hosting without a server.
-- **FastAPI (Python)** — alternative local/server hosting option.
+This repo uses a Vercel Serverless Function to serve `POST /api/county_data` backed by `data.db` with `sql.js` (WASM). No server needed.
 
 ## Endpoint
-- Path: `POST /county_data`
+- Path: `POST /api/county_data`
 - Body (JSON, `content-type: application/json`):
   - `zip` (required): 5-digit ZIP, e.g. `"02138"`
   - `measure_name` (required): one of
@@ -100,73 +98,46 @@ This repo includes two ways to serve the `POST /county_data` endpoint backed by 
     - Daily fine particulate matter
   - `coffee` (optional): if `"teapot"`, returns HTTP 418
 
-## Run locally (FastAPI option)
-```bash
-pip3 install -r requirements.txt
-uvicorn app:app --reload --port 8000
-```
-
-## Test with curl
+## Test with curl (after deploy or with `vercel dev`)
 ```bash
 # Success (200)
 curl -s -H 'content-type: application/json' \
   -d '{"zip":"02138","measure_name":"Adult obesity"}' \
-  http://localhost:8000/county_data | head
+  https://<your-vercel-app>.vercel.app/api/county_data | head
 
 # Teapot (418)
 curl -i -H 'content-type: application/json' \
   -d '{"zip":"02138","measure_name":"Adult obesity","coffee":"teapot"}' \
-  http://localhost:8000/county_data
+  https://<your-vercel-app>.vercel.app/api/county_data
 
 # Missing inputs (400)
-curl -i -H 'content-type: application/json' -d '{"zip":"02138"}' http://localhost:8000/county_data
+curl -i -H 'content-type: application/json' -d '{"zip":"02138"}' https://<your-vercel-app>.vercel.app/api/county_data
 
 # Not found (404)
 curl -i -H 'content-type: application/json' \
   -d '{"zip":"99999","measure_name":"Adult obesity"}' \
-  http://localhost:8000/county_data
+  https://<your-vercel-app>.vercel.app/api/county_data
 ```
 
 ## Response shape (example subset)
 For `{"zip":"02138","measure_name":"Adult obesity"}` the response is an array of objects with keys:
 `state, county, state_code, county_code, year_span, measure_name, measure_id, numerator, denominator, raw_value, confidence_interval_lower_bound, confidence_interval_upper_bound, data_release_year, fipscode`.
 
-## Deployment (Netlify — recommended)
-This repo contains a Netlify serverless function at `netlify/functions/county_data.js` and `netlify.toml` that:
-- Redirects `POST /county_data` → `/.netlify/functions/county_data`.
-- Bundles `data.db` and `sql.js` WASM.
-
-Steps:
-1. Ensure `data.db` exists in the repo root (already included).
-2. Push to GitHub (done). In Netlify, create a new site from this repo.
-3. Build command: `npm ci --omit=dev || npm i` (in `netlify.toml`). No separate build step needed.
-4. After deploy, test:
-   ```bash
-   curl -s -H 'content-type: application/json' \
-     -d '{"zip":"02138","measure_name":"Adult obesity"}' \
-     https://<your-netlify-site>.netlify.app/county_data | head
-   ```
-
-Local dev (optional):
-```bash
-npm i
-npx netlify-cli dev
-# test locally
-curl -s -H 'content-type: application/json' \
-  -d '{"zip":"02138","measure_name":"Adult obesity"}' \
-  http://localhost:8888/county_data | head
-```
-
-## Deployment (Render — alternative)
-This repo also includes `render.yaml` to deploy the FastAPI app on Render:
-- Build: `pip install -r requirements.txt`
-- Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
-- Env var: `DB_PATH=data.db`
+## Deployment (Vercel)
+- Ensure `data.db` is committed at repo root (present).
+- Files:
+  - `api/county_data.js` — Vercel function (Node + sql.js)
+  - `vercel.json` — includes `data.db` and `sql-wasm.wasm` in the function bundle
+  - `package.json` — ESM enabled (`"type": "module"`), depends on `sql.js`
+- Steps:
+  1. Push to your GitHub repo.
+  2. In Vercel, import the repo and deploy (framework: Other).
+  3. Test with curl against `https://<your-vercel-app>.vercel.app/api/county_data`.
 
 ## API files
-- `app.py` — FastAPI app exposing `POST /county_data` with parameterized SQL, required errors (418/400/404)
-- `requirements.txt` — FastAPI, Uvicorn, Pydantic
-- `render.yaml` — Render configuration (web service)
+- `api/county_data.js` — Vercel function exposing `POST /api/county_data` with required behaviors (418/400/404)
+- `vercel.json` — bundle config
+- `package.json` — Node dependencies
 
 ## Attribution
 This assignment permits the use of generative AI. This repository includes code authored with assistance from a generative AI coding assistant (Cascade) and reviewed/edited by the author. Please include attribution in any additional files that incorporate external sources.

@@ -4,6 +4,7 @@
   "private": true,
   "description": "Netlify Functions API for /county_data using sql.js and bundled SQLite db",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "build": "echo 'No build step for functions'",
     "start": "npx netlify-cli dev"
