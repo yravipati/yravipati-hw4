@@ -2,13 +2,13 @@
   "name": "yravipati-hw4-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Vercel Serverless API for /api/county_data using sql.js and bundled SQLite db",
+  "description": "Vercel Serverless API for /api/county_data using better-sqlite3 and bundled SQLite db",
   "license": "MIT",
   "scripts": {
     "build": "echo 'No build step for functions'",
     "dev": "vercel dev"
   },
   "dependencies": {
-    "sql.js": "^1.10.2"
+    "better-sqlite3": "^11.3.0"
   }
 }

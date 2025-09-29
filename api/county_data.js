@@ -22,43 +22,34 @@ const ALLOWED_MEASURES = new Set([
   'Daily fine particulate matter',
 ]);
 
-// Lazy-load sql.js and database
-let dbPromise = null;
-async function getDb() {
-  if (!dbPromise) {
-    dbPromise = (async () => {
-      const initSqlJs = require('sql.js');
-      
-      // Initialize sql.js with CDN WASM for Vercel compatibility
-      const SQL = await initSqlJs({
-        locateFile: (file) => `https://sql.js.org/dist/${file}`
-      });
-      
-      // Try multiple paths for data.db in Vercel environment
-      const candidates = [
-        path.join(__dirname, 'data.db'),
-        path.join(process.cwd(), 'data.db'),
-        path.join(__dirname, '..', '..', 'data.db'),
-      ];
-      
-      let dbPath = null;
-      for (const p of candidates) {
-        if (fs.existsSync(p)) {
-          dbPath = p;
-          break;
-        }
+// Database connection using better-sqlite3 (Vercel-compatible)
+let db = null;
+function getDb() {
+  if (!db) {
+    const Database = require('better-sqlite3');
+    
+    // Try multiple paths for data.db in Vercel environment
+    const candidates = [
+      path.join(__dirname, 'data.db'),
+      path.join(process.cwd(), 'data.db'),
+      path.join(__dirname, '..', '..', 'data.db'),
+    ];
+    
+    let dbPath = null;
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        dbPath = p;
+        break;
       }
-      
-      if (!dbPath) {
-        throw new Error(`data.db not found. Tried: ${candidates.join(', ')}`);
-      }
-      
-      const fileBuffer = fs.readFileSync(dbPath);
-      const u8 = new Uint8Array(fileBuffer);
-      return new SQL.Database(u8);
-    })();
+    }
+    
+    if (!dbPath) {
+      throw new Error(`data.db not found. Tried: ${candidates.join(', ')}`);
+    }
+    
+    db = new Database(dbPath, { readonly: true });
   }
-  return dbPromise;
+  return db;
 }
 
 function send(res, status, payload) {
@@ -91,24 +82,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const db = await getDb();
+    const db = getDb();
 
     // Resolve county + state for the ZIP
-    const zipStmt = db.prepare('SELECT county, state_abbreviation AS state FROM zip_county WHERE zip = ? LIMIT 1;');
-    zipStmt.bind([zipStr]);
-    let county = null;
-    let state = null;
-    while (zipStmt.step()) {
-      const row = zipStmt.getAsObject();
-      county = row.county;
-      state = row.state;
-      break;
-    }
-    zipStmt.free();
+    const zipStmt = db.prepare('SELECT county, state_abbreviation AS state FROM zip_county WHERE zip = ? LIMIT 1');
+    const zipResult = zipStmt.get(zipStr);
 
-    if (!county || !state) {
+    if (!zipResult) {
       return send(res, 404, { error: 'not_found', detail: 'ZIP not found in dataset' });
     }
+
+    const { county, state } = zipResult;
 
     // Fetch rows from county_health_rankings
     const chrStmt = db.prepare(
@@ -117,13 +101,7 @@ module.exports = async function handler(req, res) {
       'confidence_interval_upper_bound, data_release_year, fipscode ' +
       'FROM county_health_rankings WHERE county = ? AND state = ? AND measure_name = ?'
     );
-    chrStmt.bind([county, state, measureName]);
-
-    const results = [];
-    while (chrStmt.step()) {
-      results.push(chrStmt.getAsObject());
-    }
-    chrStmt.free();
+    const results = chrStmt.all(county, state, measureName);
 
     if (results.length === 0) {
       return send(res, 404, { error: 'not_found', detail: 'No data for given zip and measure_name' });
