@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS1060 HW4 API</title>
+</head>
+<body>
+    <h1>CS1060 HW4 API</h1>
+    <p>This site hosts a serverless API endpoint:</p>
+    <ul>
+        <li><strong>POST /api/county_data</strong> - Query county health data by ZIP code</li>
+    </ul>
+    
+    <h2>Usage Example</h2>
+    <pre><code>curl -H 'content-type: application/json' \
+  -d '{"zip":"02138","measure_name":"Adult obesity"}' \
+  https://your-site.vercel.app/api/county_data</code></pre>
+    
+    <p>See the <a href="https://github.com/yravipati/yravipati-hw4">GitHub repository</a> for full documentation.</p>
+</body>
+</html>
+</pre>

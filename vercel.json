@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.js": {
+    "api/county_data.js": {
       "includeFiles": "data.db"
     }
   }
