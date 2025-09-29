@@ -4,16 +4,8 @@
 // Special rule: if coffee == "teapot" → 418. Errors: 400 (bad request), 404 (not found).
 // Uses sql.js (WASM) to query the bundled SQLite database (data.db) read-only.
 
-import fs from 'fs';
-import path from 'path';
-import initSqlJs from 'sql.js';
-import { createRequire } from 'module';
-
-// ESM-compatible __dirname
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
-// Use require.resolve in ESM via createRequire
-const require = createRequire(import.meta.url);
-const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm');
+const fs = require('fs');
+const path = require('path');
 
 const ALLOWED_MEASURES = new Set([
   'Violent crime rate',
@@ -30,25 +22,33 @@ const ALLOWED_MEASURES = new Set([
   'Daily fine particulate matter',
 ]);
 
-// Try to locate data.db next to the built function or project root
-function findDbPath(dir) {
-  const candidates = [
-    path.join(dir, 'data.db'),
-    path.join(dir, '..', '..', 'data.db'),
-    path.join(process.cwd(), 'data.db'),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
-  }
-  return candidates[0];
-}
-
+// Lazy-load sql.js and database
 let dbPromise = null;
 async function getDb() {
   if (!dbPromise) {
     dbPromise = (async () => {
-      const SQL = await initSqlJs({ locateFile: () => wasmPath });
-      const dbPath = findDbPath(__dirname);
+      const initSqlJs = require('sql.js');
+      const SQL = await initSqlJs();
+      
+      // Try multiple paths for data.db in Vercel environment
+      const candidates = [
+        path.join(__dirname, 'data.db'),
+        path.join(process.cwd(), 'data.db'),
+        path.join(__dirname, '..', '..', 'data.db'),
+      ];
+      
+      let dbPath = null;
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          dbPath = p;
+          break;
+        }
+      }
+      
+      if (!dbPath) {
+        throw new Error(`data.db not found. Tried: ${candidates.join(', ')}`);
+      }
+      
       const fileBuffer = fs.readFileSync(dbPath);
       const u8 = new Uint8Array(fileBuffer);
       return new SQL.Database(u8);
@@ -62,7 +62,7 @@ function send(res, status, payload) {
   res.send(JSON.stringify(payload));
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return send(res, 400, { error: 'bad_request', detail: 'Only POST with content-type: application/json is supported' });
   }
