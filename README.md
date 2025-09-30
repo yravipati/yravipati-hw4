@@ -116,14 +116,18 @@ Serverless API endpoint deployed on Vercel that queries the SQLite database from
   - `coffee` (optional): if `"teapot"`, returns HTTP 418
 
 ### Response Codes
-- **200**: Success - returns array of health data records
+- **200**: Success - returns array of health data records (POST) or API documentation (GET)
 - **400**: Bad request - missing/invalid zip or measure_name
 - **404**: Not found - ZIP not in dataset or no health data available
+- **405**: Method not allowed - unsupported HTTP methods
 - **418**: I'm a teapot - when `coffee=teapot` is provided
 
 ## Testing Examples
 
 ```bash
+# API Documentation (GET) - View in browser or curl
+curl -s https://yravipati-hw4.vercel.app/county_data | jq
+
 # Success (200) - Returns health data for Cambridge, MA
 curl -s -H 'content-type: application/json' \
   -d '{"zip":"02138","measure_name":"Adult obesity"}' \
@@ -164,10 +168,13 @@ For `{"zip":"02138","measure_name":"Adult obesity"}` the response is an array of
 - `link.txt` — Contains live API endpoint URL
 
 ### Query Logic
-1. Validate input (ZIP format, allowed measure names)
-2. Look up county/state from ZIP code in `zip_county` table
-3. Query health data from `county_health_rankings` table
-4. Return results with proper HTTP status codes
+1. **GET requests**: Return comprehensive API documentation
+2. **POST requests**: Process data queries:
+   - Validate input (ZIP format, allowed measure names)
+   - Look up county/state from ZIP code in `zip_county` table
+   - Query health data from `county_health_rankings` table
+   - Return results with proper HTTP status codes
+3. **Security**: Multi-layer SQL injection protection with input validation and parameterized queries
 
 ---
 
@@ -180,9 +187,11 @@ python3 test_full_implementation.py
 ```
 
 This tests:
-- ✅ Part 1: CSV loading, database creation, schema validation
-- ✅ Part 2: All API endpoints, error codes, data validation
+- ✅ Part 1: CSV loading, database creation, schema validation (12 tests)
+- ✅ Part 2: All API endpoints, error codes, data validation (10 tests)
 - ✅ Live API testing against deployed endpoint
+- ✅ Content-type validation and invalid input handling
+- ✅ SQL injection protection verification
 
 ## Individual Tests
 ```bash
@@ -227,7 +236,7 @@ yravipati-hw4/
 - **Course Repository**: https://github.com/cs1060f25/yravipati-hw4
 - **Personal Repository**: https://github.com/yravipati/yravipati-hw4
 - **Live API Endpoint**: https://yravipati-hw4.vercel.app/county_data
-- **Test Status**: 20/20 tests passing ✅
+- **Test Status**: 22/22 tests passing ✅
 
 ## Attribution
 This assignment permits the use of generative AI. This repository includes code authored with assistance from a generative AI coding assistant (Cascade) and reviewed/edited by the author.
