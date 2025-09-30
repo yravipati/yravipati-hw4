@@ -68,8 +68,31 @@ function send(res, status, payload) {
 }
 
 module.exports = async function handler(req, res) {
+  // Handle GET requests with helpful documentation
+  if (req.method === 'GET') {
+    return send(res, 200, {
+      message: "CS1060 HW4 - County Health Data API",
+      endpoint: "/county_data",
+      method: "POST",
+      content_type: "application/json",
+      required_fields: ["zip", "measure_name"],
+      optional_fields: ["coffee"],
+      example: {
+        zip: "02138",
+        measure_name: "Adult obesity"
+      },
+      allowed_measures: [
+        "Violent crime rate", "Unemployment", "Children in poverty",
+        "Diabetic screening", "Mammography screening", "Preventable hospital stays",
+        "Uninsured", "Sexually transmitted infections", "Physical inactivity",
+        "Adult obesity", "Premature Death", "Daily fine particulate matter"
+      ],
+      special_behavior: "Set coffee=teapot for HTTP 418 response"
+    });
+  }
+  
   if (req.method !== 'POST') {
-    return send(res, 400, { error: 'bad_request', detail: 'Only POST with content-type: application/json is supported' });
+    return send(res, 405, { error: 'method_not_allowed', detail: 'Only GET (for docs) and POST (for data) are supported' });
   }
   const ct = req.headers['content-type'] || '';
   if (!ct.includes('application/json')) {
